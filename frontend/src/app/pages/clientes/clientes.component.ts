@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
+import { ClientModel } from 'src/app/models/client.model';
 import { ClientService } from 'src/app/services/client.service';
 
 @Component({
@@ -10,7 +11,9 @@ import { ClientService } from 'src/app/services/client.service';
 })
 export class ClientesComponent implements OnInit {
 
-  public clientsList: any;
+  public clientsList: ClientModel[] = [];
+
+  public client: ClientModel = new ClientModel("","","","");
 
   constructor(private clientSevice : ClientService) { }
 
@@ -26,16 +29,55 @@ export class ClientesComponent implements OnInit {
 
   }
 
+  setClient(client: ClientModel){
+    this.client = client;
+  }
+
   onSubmit(form: NgForm){
 
       if (form.valid){
         const date = new Date();
-        form.value.dateAdded = date.toISOString();
-        form.value.key = form.value.name.toLowerCase();
-        this.clientSevice.saveClient(form.value).subscribe();
+        this.client.dataAdded = date.toISOString();
+
+        this.client.sharedKey = this.client.name.replace(" ","").toLowerCase();
+        console.log(this.client);
+
+        this.clientSevice.saveClient(this.client).subscribe( res => {
+            this.clientSevice.getClients().subscribe()
+        });
       }
 
   }
+
+  onSubmitModify(form: NgForm){
+
+    if (form.valid){
+      this.clientSevice.saveClient(this.client).subscribe( res => {
+          this.clientSevice.getClients().subscribe()
+      });
+    }
+
+}
+
+  deleteClient(){
+
+    this.clientSevice.deleteClient(this.client).subscribe( res => {
+      this.clientSevice.getClients().subscribe()
+    })
+
+  }
+
+  search(formSearch: NgForm){
+    if( formSearch.value.sharedKey != null )
+      this.clientSevice.getClient(formSearch.value.sharedKey).subscribe(
+        res => {
+          this.clientsList = []
+          this.clientsList.push(res)
+        }
+      )
+  }
+
+
 
 
 
